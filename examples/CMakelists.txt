@@ -1,0 +1,9 @@
+
+project(emurpc_examples)
+
+add_executable(emurpc_basic
+    basic/basic.c
+)
+
+target_include_directories(emurpc_basic PRIVATE ${CMAKE_SOURCE_DIR}/include)
+target_link_libraries(emurpc_basic PRIVATE emurpc)

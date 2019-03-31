@@ -1,0 +1,33 @@
+
+#include <stdio.h>
+#include <string.h>
+
+#include "emurpc.h"
+
+static bool save_state_callback(uint16_t save_slot, void* user_data) {
+    printf("Save state called by RPC client");
+	return false;
+}
+
+static bool load_state_callback(uint16_t save_slot, void* user_data) {
+    printf("Load state called by RPC client");
+	return true;
+}
+
+int main(int argv, char** argc) {
+    struct emurpc_state* emurpc = malloc(sizeof(struct emurpc_state));
+    struct emurpc_config config;
+    config.enable_gpu_access_timing = true;
+    config.enable_memory_access_timing = true;
+    config.enable_register_access_timing = true;
+    config.load_rom_callback = NULL;
+    config.save_state_callback = save_state_callback;
+    config.load_state_callback = load_state_callback;
+
+    emurpc_init(emurpc, config);
+
+	printf("Listening on 0.0.0.0:8080\nPress any key to quit");
+	while (!getchar());
+	emurpc_shutdown(emurpc);
+    return 0;
+}
