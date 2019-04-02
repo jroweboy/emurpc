@@ -14,6 +14,9 @@ struct emurpc_state_impl {
 
 bool emurpc_init(struct emurpc_state* state, struct emurpc_config config) {
 	struct emurpc_state_impl* impl = malloc(sizeof(struct emurpc_state_impl));
+	if (!impl) {
+		return false;
+	}
 
 	struct rpcserver_config rpc_config;
 	rpc_config.server_name = "ur mom";
