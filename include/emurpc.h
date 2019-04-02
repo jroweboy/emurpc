@@ -36,19 +36,15 @@ struct emurpc_params_draw_overlay_text {
 };
 typedef bool (*emurpc_callback_draw_overlay_text)(struct emurpc_params_draw_overlay_text, void* user_data);
 
-struct emurpc_config {emurpc_save_state_callback save_state_callback;
+struct emurpc_config {
+	emurpc_save_state_callback save_state_callback;
     emurpc_load_state_callback load_state_callback;
     emurpc_load_rom_callback load_rom_callback;
 	void* user_data; // Extra data passed into the callbacks
 
     bool enable_memory_access_timing;
     bool enable_gpu_access_timing;
-    bool enable_register_access_timing;
-};
-
-struct emurpc_state_impl;
-struct emurpc_state {
-    struct emurpc_state_impl* impl;
+    bool enable_special_access_timing;
 };
 
 enum emurpc_access_type {
@@ -56,18 +52,34 @@ enum emurpc_access_type {
     EMURPC_ACCESS_TYPE_WRITE,
 };
 
-bool emurpc_init(struct emurpc_state*, struct emurpc_config);
+struct emurpc_memory_access {
+	enum emurpc_access_type type;
+	uint64_t address;
+};
 
-void emurpc_shutdown(struct emurpc_state*);
+struct emurpc_gpu_access {
+	enum emurpc_access_type type;
+	char* field_name;
+};
 
-bool emurpc_process_events(struct emurpc_state*);
+struct emurpc_special_access {
+	enum emurpc_access_type type;
+	char* field_name;
+};
+
+struct emurpc_state;
+struct emurpc_state* emurpc_start(struct emurpc_config);
+
+void emurpc_destroy(struct emurpc_state*);
+
+void emurpc_process_events(struct emurpc_state*);
 
 void emurpc_on_frame_end(struct emurpc_state*);
 
-void emurpc_on_memory_access(struct emurpc_state*, enum emurpc_access_type type);
+void emurpc_on_memory_access(struct emurpc_state*, struct emurpc_memory_access);
 
-void emurpc_on_gpu_access(struct emurpc_state*, enum emurpc_access_type type);
+void emurpc_on_gpu_access(struct emurpc_state*, struct emurpc_gpu_access);
 
-void emurpc_on_register_access(struct emurpc_state*, enum emurpc_access_type type);
+void emurpc_on_special_access(struct emurpc_state*, struct emurpc_special_access);
 
 #endif

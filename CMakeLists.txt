@@ -14,8 +14,14 @@ add_library(emurpc
     include/emurpc/protocol.h
     include/emurpc/types.h
     src/emurpc.c
+    src/rpc_client.c
+	src/rpc_client.h
     src/rpc_server.c
-    src/rpc_server.h
+	src/rpc_server.h
+    src/binary_protocol.c
+	src/binary_protocol.h
+    src/json_protocol.c
+	src/json_protocol.h
 )
 
 target_include_directories(emurpc PUBLIC include)
@@ -70,6 +76,7 @@ if (EMURPC_USE_THREAD)
 		externals/tinycthread/tinycthread.c
 	)
 	target_link_libraries(emurpc PRIVATE tinycthread)
+	target_include_directories(emurpc PRIVATE externals/tinycthread/)
 	target_compile_definitions(emurpc PRIVATE HAVE_THREADS=1)
 endif()
 
