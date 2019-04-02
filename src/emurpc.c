@@ -23,8 +23,10 @@ bool emurpc_init(struct emurpc_state* state, struct emurpc_config config) {
 	rpc_config.port = 8080;
 	struct rpcserver* server = malloc(sizeof(struct rpcserver));
 	if (!rpcserver_init(server, rpc_config)) {
+		free(impl);
 		return false;
 	}
+
 	impl->rpc_server = server;
 	impl->user_data = config.user_data;
 	state->impl = impl;
