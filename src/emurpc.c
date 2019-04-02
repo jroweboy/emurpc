@@ -14,14 +14,19 @@ struct emurpc_state_impl {
 
 bool emurpc_init(struct emurpc_state* state, struct emurpc_config config) {
 	struct emurpc_state_impl* impl = malloc(sizeof(struct emurpc_state_impl));
+	if (!impl) {
+		return false;
+	}
 
 	struct rpcserver_config rpc_config;
 	rpc_config.server_name = "ur mom";
 	rpc_config.port = 8080;
 	struct rpcserver* server = malloc(sizeof(struct rpcserver));
 	if (!rpcserver_init(server, rpc_config)) {
+		free(impl);
 		return false;
 	}
+
 	impl->rpc_server = server;
 	impl->user_data = config.user_data;
 	state->impl = impl;
