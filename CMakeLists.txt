@@ -1,10 +1,11 @@
 
 cmake_minimum_required(VERSION 3.0)
+set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
 project(emurpc)
 
 option(EMURPC_BUILD_TESTS "Build tests for emurpc" Off)
-option(EMURPC_BUILD_EXAMPLES "Build examples for emurpc" On)
+option(EMURPC_BUILD_EXAMPLES "Build examples for emurpc" Off)
 option(EMURPC_BUILD_STATIC "Build static lib" On)
 # TODO support dynamic linking
 option(EMURPC_USE_THREAD "Use a separate thread for event processing" On)
@@ -22,6 +23,8 @@ add_library(emurpc
 	src/binary_protocol.h
     src/json_protocol.c
 	src/json_protocol.h
+	src/list.c
+	src/list.h
 )
 
 target_include_directories(emurpc PUBLIC include)
@@ -87,3 +90,10 @@ if (EMURPC_BUILD_EXAMPLES)
 		set(VS_STARTUP_PROJECT emurpc)
 	endif()
 endif()
+
+if (EMURPC_BUILD_TESTS)
+	enable_testing()
+	add_subdirectory(test)
+	add_test(NAME check_emurpc COMMAND check_emurpc)
+endif()
+

@@ -11,13 +11,13 @@ typedef bool (*emurpc_save_state_callback)(uint16_t save_slot, void* user_data);
 /**
  * 
  */
-typedef bool (*emurpc_load_state_callback)(uint16_t load_slot, void* user_data);
+typedef bool (*emurpc_load_state_callback)(void* user_data, uint16_t load_slot);
 
 /**
  * 
  * Return false if the rom could not be loaded
  */
-typedef bool (*emurpc_load_rom_callback)(const char* filename, void* user_data);
+typedef bool (*emurpc_load_rom_callback)(void* user_data, const char* filename);
 
 struct emurpc_params_create_overlay {
     uint32_t bg_color; /// Color of the overlay as rgba8
@@ -26,7 +26,7 @@ struct emurpc_params_create_overlay {
     uint32_t width;
     uint32_t height;
 };
-typedef bool (*emurpc_callback_create_overlay)(struct emurpc_params_create_overlay, void* user_data);
+typedef bool (*emurpc_callback_create_overlay)(void* user_data, struct emurpc_params_create_overlay);
 
 struct emurpc_params_draw_overlay_text {
     uint32_t color; /// Text color as rgba8
@@ -34,7 +34,7 @@ struct emurpc_params_draw_overlay_text {
     uint16_t y; /// Y position of the text from the top left of the overlay
     const char* text;
 };
-typedef bool (*emurpc_callback_draw_overlay_text)(struct emurpc_params_draw_overlay_text, void* user_data);
+typedef bool (*emurpc_callback_draw_overlay_text)(void* user_data, struct emurpc_params_draw_overlay_text);
 
 struct emurpc_config {
 	emurpc_save_state_callback save_state_callback;
@@ -81,5 +81,9 @@ void emurpc_on_memory_access(struct emurpc_state*, struct emurpc_memory_access);
 void emurpc_on_gpu_access(struct emurpc_state*, struct emurpc_gpu_access);
 
 void emurpc_on_special_access(struct emurpc_state*, struct emurpc_special_access);
+
+// Helper methods for accesors
+
+bool emurpc_check_addr_range(struct emurpc_state*, uint64_t addr, uint64_t size);
 
 #endif

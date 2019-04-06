@@ -4,6 +4,7 @@
 #include <tinycthread.h>
 
 #include "emurpc.h"
+#include "list.h"
 #include "rpc_server.h"
 
 struct emurpc_state {
@@ -16,21 +17,6 @@ struct emurpc_state {
 };
 
 #ifdef HAVE_THREADS
-#include <stdio.h>
-#include <windows.h>
-double RealElapsedTime(void) { // granularity about 50 microsecs on my machine
-    static LARGE_INTEGER freq, start;
-    LARGE_INTEGER count;
-    if (!QueryPerformanceCounter(&count))
-        ;                 // FatalError("QueryPerformanceCounter");
-    if (!freq.QuadPart) { // one time initialization
-        if (!QueryPerformanceFrequency(&freq))
-            ; // FatalError("QueryPerformanceFrequency");
-        start = count;
-    }
-    return (double) (count.QuadPart - start.QuadPart) / freq.QuadPart;
-}
-
 struct rpcserver_setup {
     struct rpcserver* server;
     struct rpcserver_config config;
@@ -43,13 +29,10 @@ static int run_rpcserver(struct rpcserver_setup* setup) {
     }
     free(setup);
     struct timespec one_ns = {0, 1};
-    RealElapsedTime();
     while (1) {
         rpcserver_process_events(server);
-        printf("start time:\t%f\n", RealElapsedTime());
-		thrd_yield();
-        //thrd_sleep(&one_ns, NULL);
-        printf("end time:\t%f\n\n", RealElapsedTime());
+        // thrd_yield();
+        thrd_sleep(&one_ns, NULL);
     }
     return 1;
 }
@@ -125,3 +108,8 @@ void emurpc_on_gpu_access(struct emurpc_state* state,
 
 void emurpc_on_special_access(struct emurpc_state* state,
                               struct emurpc_special_access config) {}
+
+bool emurpc_check_addr_range(struct emurpc_state* state, uint64_t addr,
+                             uint64_t size) {
+    return false;
+}
