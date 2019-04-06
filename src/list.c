@@ -74,25 +74,13 @@ void destroy_arraylist(struct arraylist* list) {
     list->len = 0;
 }
 
-struct sortedlist create_sortedlist(uint64_t obj_size, list_comparator comp) {
-    struct sortedlist a;
-    a.list = create_arraylist(obj_size);
-    a.comp = comp;
-    return a;
-}
-
-void destroy_sortedlist(struct sortedlist* list) {
-    destroy_arraylist(&list->list);
-}
-
-static int find_insertion_point(struct sortedlist* list, const void* val,
-                                bool exact) {
+static int find_insertion_point(struct arraylist* list, const void* val,
+                                list_comparator comp, bool exact) {
     int l = 0;
-    int r = list->list.len - 1;
+    int r = list->len - 1;
     int curr = l + (r - l) / 2;
     while (l <= r) {
-        int c = list->comp(
-            val, (const void*) (list->list.val + curr * list->list.obj_size));
+        int c = comp(val, (const void*) (list->val + curr * list->obj_size));
         if (c == 0) {
             return curr;
         }
@@ -110,16 +98,20 @@ static int find_insertion_point(struct sortedlist* list, const void* val,
     }
 }
 
-void push_sortedlist(struct sortedlist* list, const void* val) {
-    insert_arraylist(&list->list, val, find_insertion_point(list, val, false));
+void push_sortedlist(struct arraylist* list, const void* val,
+                     list_comparator comp) {
+    insert_arraylist(list, val, find_insertion_point(list, val, comp, false));
 }
 
-int find_sortedlist(struct sortedlist* list, const void* val) {
-    return find_insertion_point(list, val, true);
+int find_sortedlist(struct arraylist* list, const void* val,
+                    list_comparator comp) {
+    return find_insertion_point(list, val, comp, true);
 }
 
-void remove_sortedlist(struct sortedlist* list, size_t index) {
-    remove_arraylist(&list->list, index);
+void remove_sortedlist(struct arraylist* list, size_t index) {
+    remove_arraylist(list, index);
 }
+
+struct range create_range(uint64_t start, uint64_t len);
 
 void add_range(struct rangeset* set, struct range range) {}

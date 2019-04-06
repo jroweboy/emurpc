@@ -31,20 +31,11 @@ void destroy_arraylist(struct arraylist* list);
 
 /// Sorted List
 
-struct sortedlist {
-    struct arraylist list;
-    list_comparator comp;
-};
+void push_sortedlist(struct arraylist* list, const void* val, list_comparator comp);
 
-struct sortedlist create_sortedlist(uint64_t obj_size, list_comparator comp);
+int find_sortedlist(struct arraylist* list, const void* val, list_comparator comp);
 
-void destroy_sortedlist(struct sortedlist* list);
-
-void push_sortedlist(struct sortedlist* list, const void* val);
-
-int find_sortedlist(struct sortedlist* list, const void* val);
-
-void remove_sortedlist(struct sortedlist* list, size_t index);
+void remove_sortedlist(struct arraylist* list, size_t index);
 
 /// Ranges
 
@@ -61,9 +52,25 @@ struct range {
 };
 
 struct rangeset {
-    struct sortedlist ranges;
+    struct arraylist ranges;
 };
 
+struct range create_range(uint64_t start, uint64_t len);
+
+void destroy_range(struct range*);
+
+bool in_range(struct range*, uint64_t val);
+
+bool is_overlapping_range(struct range*, struct range*);
+
+void merge_overlapping_range(struct range*, struct range*);
+
+struct rangeset create_rangeset();
+
 void add_range(struct rangeset* set, struct range range);
+
+bool in_rangeset(struct rangeset* set, uint64_t val);
+
+uint32_t* fetch_id_rangeset(struct rangeset* set, uint64_t addr);
 
 #endif
