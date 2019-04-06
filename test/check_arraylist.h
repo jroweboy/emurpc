@@ -90,11 +90,11 @@ START_TEST(test_arraylist_insert_empty) {
 END_TEST
 
 START_TEST(test_arraylist_remove_start) {
-	int i = 5;
+    int i = 5;
     ck_assert_int_eq(arraylist->len, 0);
     push_arraylist(arraylist, &i);
     ck_assert_int_eq(((int*) arraylist->val)[0], 5);
-	pop_arraylist(arraylist);
+    pop_arraylist(arraylist);
     ck_assert_int_eq(arraylist->len, 0);
 }
 END_TEST
@@ -105,14 +105,14 @@ START_TEST(test_arraylist_remove_end) {
         push_arraylist(arraylist, &l[i]);
     }
     ck_assert_int_eq(arraylist->len, 10);
-	remove_arraylist(arraylist, 9);
+    remove_arraylist(arraylist, 9);
     ck_assert_int_eq(arraylist->len, 9);
 }
 END_TEST
 
 START_TEST(test_arraylist_remove_empty) {
     ck_assert_int_eq(arraylist->len, 0);
-	pop_arraylist(arraylist);
+    pop_arraylist(arraylist);
     ck_assert_int_eq(arraylist->len, 0);
 }
 END_TEST

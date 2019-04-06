@@ -1,5 +1,6 @@
 
 #include "list.h"
+#include <string.h>
 
 struct arraylist create_arraylist(uint64_t obj_size) {
     struct arraylist a;
@@ -77,31 +78,30 @@ struct sortedlist create_sortedlist(uint64_t obj_size, list_comparator comp) {
     struct sortedlist a;
     a.list = create_arraylist(obj_size);
     a.comp = comp;
+    return a;
 }
 
 void destroy_sortedlist(struct sortedlist* list) {
     destroy_arraylist(&list->list);
 }
 
-static size_t find_insertion_point(struct sortedlist* list, const void* val,
-                                   bool exact) {
-    size_t curr;
-    size_t i = list->list.len;
-    size_t l = 0;
-    size_t r = list->list.len;
-
+static int find_insertion_point(struct sortedlist* list, const void* val,
+                                bool exact) {
+    int l = 0;
+    int r = list->list.len - 1;
+    int curr = l + (r - l) / 2;
     while (l <= r) {
-        curr = l + (r - l) / 2;
         int c = list->comp(
-            val, (const void*) (&list->list.val + curr * list->list.obj_size));
+            val, (const void*) (list->list.val + curr * list->list.obj_size));
         if (c == 0) {
             return curr;
         }
-        if (c == -1) {
+        if (c < 0) {
             l = curr + 1;
         } else {
             r = curr - 1;
         }
+        curr = l + (r - l) / 2;
     }
     if (exact) {
         return -1;
@@ -114,8 +114,12 @@ void push_sortedlist(struct sortedlist* list, const void* val) {
     insert_arraylist(&list->list, val, find_insertion_point(list, val, false));
 }
 
-size_t find_sortedlist(struct sortedlist* list, const void* val) {
+int find_sortedlist(struct sortedlist* list, const void* val) {
     return find_insertion_point(list, val, true);
+}
+
+void remove_sortedlist(struct sortedlist* list, size_t index) {
+    remove_arraylist(&list->list, index);
 }
 
 void add_range(struct rangeset* set, struct range range) {}

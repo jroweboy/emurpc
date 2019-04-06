@@ -42,7 +42,9 @@ void destroy_sortedlist(struct sortedlist* list);
 
 void push_sortedlist(struct sortedlist* list, const void* val);
 
-size_t find_sortedlist(struct sortedlist* list, const void* val);
+int find_sortedlist(struct sortedlist* list, const void* val);
+
+void remove_sortedlist(struct sortedlist* list, size_t index);
 
 /// Ranges
 
