@@ -17,7 +17,7 @@ static bool resize_arraylist_if_needed(struct arraylist* list) {
     }
     list->capacity *= 2;
     list->val = realloc(list->val, list->obj_size * list->capacity);
-    return !!list->val;
+    return list->val != NULL;
 }
 
 bool insert_arraylist(struct arraylist* list, const void* val, size_t index) {
@@ -70,8 +70,6 @@ void destroy_arraylist(struct arraylist* list) {
     if (list->val) {
         free(list->val);
     }
-    list->capacity = 0;
-    list->len = 0;
 }
 
 static int find_insertion_point(struct arraylist* list, const void* val,
@@ -112,6 +110,55 @@ void remove_sortedlist(struct arraylist* list, size_t index) {
     remove_arraylist(list, index);
 }
 
-struct range create_range(uint64_t start, uint64_t len);
+struct range create_range(uint64_t start, uint64_t len) {
+    struct range r;
+    r.start = start;
+    r.end = start + len;
+    r.callbacks = create_arraylist(sizeof(struct range_callback));
+    return r;
+}
 
-void add_range(struct rangeset* set, struct range range) {}
+void destroy_range(struct range* range) {
+    if (!range) {
+        return;
+    }
+    destroy_arraylist(&range->callbacks);
+}
+
+bool in_range(struct range* range, uint64_t addr) {
+    return range->start <= addr && addr <= range->end;
+}
+
+bool is_overlapping_range(struct range* l, struct range* r) {
+    return in_range(l, r->start) || in_range(l, r->end);
+}
+
+void merge_overlapping_range(struct range* l, struct range* r) {
+    if (!is_overlapping_range(l, r)) {
+        return;
+    }
+    l->start = l->start < r->start ? l->start : r->start;
+    l->end = l->end < r->end ? l->end : r->end;
+    for (int i=0; i < r->callbacks.len; ++i) {
+        push_arraylist(&l->callbacks, (struct range_callback*)(r->callbacks.val)[i]);
+    }
+    destroy_range(r);
+}
+
+struct rangeset create_rangeset() {
+    struct rangeset r;
+    r.ranges = create_arraylist(sizeof(struct range));
+    return r;
+}
+
+void add_range(struct rangeset* set, struct range range) {
+
+}
+
+bool in_rangeset(struct rangeset* set, uint64_t val) {
+    return false;
+}
+
+uint32_t* fetch_id_rangeset(struct rangeset* set, uint64_t addr) {
+
+}

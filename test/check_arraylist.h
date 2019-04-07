@@ -146,4 +146,4 @@ Suite* arraylist_suite() {
     return s;
 }
 
-#endif CHECK_EMURPC_ARRAYLIST_H
+#endif

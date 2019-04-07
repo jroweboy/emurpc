@@ -59,10 +59,14 @@ struct range create_range(uint64_t start, uint64_t len);
 
 void destroy_range(struct range*);
 
-bool in_range(struct range*, uint64_t val);
+bool in_range(struct range*, uint64_t addr);
 
 bool is_overlapping_range(struct range*, struct range*);
 
+/**
+ * Merges two overlapping ranges. The first parameter will contain the merged range,
+ * with the combined callbacks inside, and the second range will be freed
+ */
 void merge_overlapping_range(struct range*, struct range*);
 
 struct rangeset create_rangeset();
@@ -71,6 +75,12 @@ void add_range(struct rangeset* set, struct range range);
 
 bool in_rangeset(struct rangeset* set, uint64_t val);
 
-uint32_t* fetch_id_rangeset(struct rangeset* set, uint64_t addr);
+/**
+ *
+ * @param set
+ * @param addr Address to return all callback ids
+ * @return
+ */
+struct range_callback* fetch_callback_rangeset(struct rangeset* set, uint64_t addr);
 
 #endif

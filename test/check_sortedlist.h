@@ -13,7 +13,7 @@ int compare_int(const void* left, const void* right) {
 
 void sortedlist_setup(void) {
     sortedlist = malloc(sizeof(struct arraylist));
-    *sortedlist = create_arraylist(sizeof(int), compare_int);
+    *sortedlist = create_arraylist(sizeof(int));
 }
 
 void sortedlist_teardown(void) {
