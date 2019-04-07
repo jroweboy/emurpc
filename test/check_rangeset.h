@@ -1,4 +1,0 @@
-#ifndef CHECK_EMURPC_RANGESET_H
-#define CHECK_EMURPC_RANGESET_H
-
-#endif

@@ -1,5 +1,3 @@
-#include "emurpc/types.h"
-
 #ifndef EMURPC_LIST_H
 #define EMURPC_LIST_H
 
@@ -31,9 +29,11 @@ void destroy_arraylist(struct arraylist* list);
 
 /// Sorted List
 
-void push_sortedlist(struct arraylist* list, const void* val, list_comparator comp);
+void push_sortedlist(struct arraylist* list, const void* val,
+                     list_comparator comp);
 
-int find_sortedlist(struct arraylist* list, const void* val, list_comparator comp);
+int find_sortedlist(struct arraylist* list, const void* val,
+                    list_comparator comp);
 
 void remove_sortedlist(struct arraylist* list, size_t index);
 
@@ -64,8 +64,8 @@ bool in_range(struct range*, uint64_t addr);
 bool is_overlapping_range(struct range*, struct range*);
 
 /**
- * Merges two overlapping ranges. The first parameter will contain the merged range,
- * with the combined callbacks inside, and the second range will be freed
+ * Merges two overlapping ranges. The first parameter will contain the merged
+ * range, with the combined callbacks inside, and the second range will be freed
  */
 void merge_overlapping_range(struct range*, struct range*);
 
@@ -81,6 +81,7 @@ bool in_rangeset(struct rangeset* set, uint64_t val);
  * @param addr Address to return all callback ids
  * @return
  */
-struct range_callback* fetch_callback_rangeset(struct rangeset* set, uint64_t addr);
+struct range_callback* fetch_callback_rangeset(struct rangeset* set,
+                                               uint64_t addr);
 
 #endif
