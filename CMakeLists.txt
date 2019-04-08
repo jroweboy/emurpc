@@ -13,15 +13,19 @@ add_library(emurpc
 	include/emurpc.h
 	include/emurpc.hpp
     include/common.h
+    src/binary_protocol.cpp
+	src/binary_protocol.h
+    src/callback.cpp
+	src/callback.h
     src/emurpc.cpp
+    src/json_protocol.cpp
+	src/json_protocol.h
+	src/protocol.cpp
+	src/protocol.h
     src/rpc_client.cpp
 	src/rpc_client.h
     src/rpc_server.cpp
 	src/rpc_server.h
-    src/binary_protocol.cpp
-	src/binary_protocol.h
-    src/json_protocol.cpp
-	src/json_protocol.h
 )
 
 target_include_directories(emurpc PUBLIC include)

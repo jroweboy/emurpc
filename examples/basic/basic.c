@@ -1,17 +1,16 @@
 
 #include <stdio.h>
 #include <string.h>
-
 #include "emurpc.h"
 
-static bool save_state_callback(uint16_t save_slot, void* user_data) {
+static bool save_state_callback(void* user_data, u16 save_slot) {
     printf("Save state called by RPC client");
-	return false;
+    return false;
 }
 
-static bool load_state_callback(uint16_t save_slot, void* user_data) {
+static bool load_state_callback(void* user_data, u16 save_slot) {
     printf("Load state called by RPC client");
-	return true;
+    return true;
 }
 
 int main(int argv, char** argc) {
@@ -23,10 +22,11 @@ int main(int argv, char** argc) {
     config.save_state_callback = save_state_callback;
     config.load_state_callback = load_state_callback;
 
-    struct emurpc_state* emurpc = emurpc_start(config);
+    emurpc_state emurpc = emurpc_start(config);
 
-	printf("Listening on 0.0.0.0:8080\nPress any key to quit");
-	while (!getchar());
-	emurpc_destroy(emurpc);
+    printf("Listening on 0.0.0.0:8080\nPress any key to quit");
+    while (!getchar())
+        ;
+    emurpc_destroy(emurpc);
     return 0;
 }

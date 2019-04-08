@@ -1,23 +1,40 @@
 
-#ifndef EMURPC_RPC_SERVER
-#define EMURPC_RPC_SERVER
+#pragma once
 
-#include "emurpc/types.h"
+#include <string>
+#include <boost/variant.hpp>
+#include "common.h"
+#include "emurpc.hpp"
 
-struct rpcserver_config {
-	const char* server_name;
-	uint16_t port;
+struct FrameEnd {};
+struct MemoryAccess {
+    EmuRPC::AccessType type;
+    u64 address;
+};
+struct GPUAccess {
+    EmuRPC::AccessType type;
+    std::string field;
+};
+struct SpecialAccess {
+    EmuRPC::AccessType type;
+    std::string field;
 };
 
-struct rpcserver;
-struct rpcserver* rpcserver_create();
+using EmuToClientMessage = boost::variant<FrameEnd, MemoryAccess, GPUAccess, SpecialAccess>;
 
-bool rpcserver_start(struct rpcserver*, struct rpcserver_config);
+struct Finished {};
 
-void rpcserver_destroy(struct rpcserver*);
+using ClientToEmuMessage = boost::variant<Finished>;
 
-void rpcserver_process_events(struct rpcserver*);
+class RPCServer {
+public:
+    explicit RPCServer(std::string hostname = "0.0.0.0", u16 port = 0);
 
-void rpcserver_handle_timing(struct rpcserver*, enum emurpc_request_timing);
+    void HandleClientEvent(ClientToEmuMessage);
 
-#endif
+    void HandleEmuCallbacks(EmuToClientMessage);
+
+private:
+    std::string hostname;
+    u16 port;
+};
