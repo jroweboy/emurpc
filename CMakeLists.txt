@@ -1,5 +1,5 @@
 
-cmake_minimum_required(VERSION 3.0)
+cmake_minimum_required(VERSION 3.1)
 set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
 project(emurpc)
@@ -9,14 +9,14 @@ option(EMURPC_BUILD_EXAMPLES "Build examples for emurpc" Off)
 option(EMURPC_BUILD_STATIC "Build static lib" On)
 # TODO support dynamic linking
 
+set(CMAKE_CXX_STANDARD 11)
+
 add_library(emurpc
 	include/emurpc.h
 	include/emurpc.hpp
     include/common.h
     src/binary_protocol.cpp
 	src/binary_protocol.h
-    src/callback.cpp
-	src/callback.h
     src/emurpc.cpp
     src/json_protocol.cpp
 	src/json_protocol.h
@@ -39,6 +39,7 @@ target_compile_definitions(emurpc PRIVATE
 	-DBOOST_ASIO_DISABLE_BUFFER_DEBUGGING
 )
 target_include_directories(emurpc PRIVATE externals/boost)
+target_include_directories(emurpc PRIVATE externals/json)
 
 if (EMURPC_BUILD_EXAMPLES)
 	add_subdirectory(examples)

@@ -7,13 +7,15 @@ extern "C" {
 
 #include "common.h"
 
-typedef u8* (*emurpc_memory_read_callback)(void* user_data, u64 address, u64 size);
-typedef void (*emurpc_memory_write_callback)(void* user_data, u64 address, u64 size, u8* data);
-typedef u8* (*emurpc_gpu_read_callback)(void* user_data, const char* field);
-typedef void (*emurpc_gpu_write_callback)(void* user_data, const char* field, u64 size, u8* data);
-typedef u8* (*emurpc_special_read_callback)(void* user_data, const char* field);
+typedef void (*emurpc_memory_read_callback)(void* user_data, u64 address, u64 size, u8* out);
+typedef void (*emurpc_memory_write_callback)(void* user_data, u64 address, u64 size,
+                                             const u8* data);
+typedef void (*emurpc_gpu_read_callback)(void* user_data, const char* field, u8* out);
+typedef void (*emurpc_gpu_write_callback)(void* user_data, const char* field, u64 size,
+                                          const u8* data);
+typedef void (*emurpc_special_read_callback)(void* user_data, const char* field, u8* out);
 typedef void (*emurpc_special_write_callback)(void* user_data, const char* field, u64 size,
-                                              u8* data);
+                                              const u8* data);
 
 typedef bool (*emurpc_save_state_callback)(void* user_data, u16 save_slot);
 

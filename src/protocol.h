@@ -1,7 +1,9 @@
 
 #pragma once
 
+#include <string>
 #include <vector>
+#include <boost/variant.hpp>
 #include "common.h"
 
 namespace Request {
@@ -13,16 +15,16 @@ enum class Timing {
     SpecialAccess, /// Emulator timings that are unique to this system
 };
 
-enum class Type {
+enum class Method {
     Command, /// Special commands for the RPC server or the emulator (but not the guest application)
     MemoryRead,   /// Reads data from the specified guest addresses. The data will be in the guest's
                   /// endianness
     MemoryWrite,  /// Writes data to the specified guest addresses. The data should be in guest's
                   /// endianness
-    RegisterRead, /// Read the CPU register state for the provided register
-    RegisterWrite, /// Write to CPU register provided
-    GPURead,       /// Read data from GPU register or buffers
-    GPUWrite,      /// Write data to GPU register or buffers
+    GPURead,      /// Read data from GPU register or buffers
+    GPUWrite,     /// Write data to GPU register or buffers
+    SpecialRead,  /// Read the special state that this emulator provides
+    SpecialWrite, /// Write the special state that this emulator provides
 };
 
 enum class Sync {
@@ -40,7 +42,7 @@ enum class Function {
               /// command packet passing in the ID for the Callback
 };
 
-enum CommandType {
+enum class CommandType {
     Continue,       /// Special packet to resume the server after a Blocking call is handled
     CancelCallback, /// Cancel the callback with the provided ID.
     ClearCPUCache,  /// Requests that the emulator clear any cached CPU instructions, useful when a
@@ -52,26 +54,32 @@ enum CommandType {
     LoadRom,  /// Launches the ROM provided by path. If a ROM is running, closes the previous ROM
               /// before launching.
     CloseRom, /// Closes currently running ROM if there is anything running
+    ResetRom, /// Resets currently running ROM if there is anything running
     CreateOverlay, /// Creates an overlay with the specified width/height/position and additional
                    /// parameters
     DrawOverlay,   /// Writes text to the overlay at position X, Y with additional parameters
 };
 
-struct Header {
+class Packet {
+public:
+    Packet();
+    Packet(u32 id, Method type, Timing timing, Sync sync, Function function);
     u32 id; /// Each request has an ID and the server will respond with the ID passed it.
             /// Sequential IDs are good enough.
-    Type type;
+    Method method;
     Timing timing;
     Sync sync;
     Function function;
 };
 
-struct MemoryWrite : Header {
+class MemoryWrite : public Packet {
+public:
     u64 address;
     std::vector<u8> data;
 };
 
-struct MemoryRead : Header {
+class MemoryRead : public Packet {
+public:
     u64 address;
     u64 length;
 };
@@ -80,24 +88,29 @@ struct MemoryRead : Header {
  * A Command is a special packet that controls other systems beside the guest application.
  */
 
-struct Command : Header {
+class Command : public Packet {
+public:
     CommandType command_type;
 };
 
-struct SaveStateCommand : Command {
+class SaveStateCommand : public Command {
+public:
     u16 slot;
 };
 
-struct LoadStateCommand : Command {
+class LoadStateCommand : public Command {
+public:
     u16 slot;
 };
 
-struct LoadRomCommand : Command {
+class LoadRomCommand : public Command {
+public:
     u16 slot;
     std::string path;
 };
 
-struct CreateOverlay : Command {
+class CreateOverlay : public Command {
+public:
     u32 bg_color; /// Color of the overlay as rgba8
     u16 x;        /// X Position of the overlay starting from the top left of the render window
     u16 y;        /// Y Position of the overlay starting from the top left of the render window
@@ -105,18 +118,22 @@ struct CreateOverlay : Command {
     u16 height;
 };
 
-struct DrawOverlayText : Command {
+class DrawOverlayText : public Command {
+public:
     u32 color; /// Text color as rgba8
     u16 x;     /// X position of the text from the top left of the overlay
     u16 y;     /// Y position of the text from the top left of the overlay
     std::string text;
 };
 
+using AnyPacket =
+    boost::variant<Packet, MemoryRead, MemoryWrite, SaveStateCommand, LoadStateCommand>;
+
 } // namespace Request
 
 namespace Response {
 
-enum Type {
+enum class Type {
     Success,  /// Empty response that just returns the ID of the packet that succeeded
     Error,    /// General error, check ErrorType for more information about the error
     Callback, /// Server is processing a callback request. The ID of the packet refers to the
@@ -125,7 +142,7 @@ enum Type {
               /// start/end)
 };
 
-enum ErrorType {
+enum class ErrorType {
     None,
     Mismatch,      /// Returned if the client version is a mismatch. The server should close the
                    /// connection afterwards.
@@ -133,10 +150,34 @@ enum ErrorType {
     Unsupported,   /// If the server doesn't support this request
 };
 
-struct Header {
+class Packet {
+public:
+    Packet();
+    Packet(u32 client_id, Type type, ErrorType error = ErrorType::None);
     u32 client_id; /// ID of the packet that this is a Response for
     Type type;
     ErrorType error;
 };
 
+class MemoryRead : public Packet {
+public:
+    MemoryRead(u32 client_id, std::vector<u8>&& data, Type type = Type::Success,
+               ErrorType error = ErrorType::None);
+    std::vector<u8> data;
+};
+
+class MemoryWrite : public Packet {
+public:
+    MemoryWrite(u32 client_id, Type type = Type::Success, ErrorType error = ErrorType::None);
+};
+
+using AnyPacket = boost::variant<Packet, MemoryRead, MemoryWrite>;
+
 } // namespace Response
+
+class ProtocolSerializer {
+public:
+    virtual std::vector<u8> SerializeResponse(Response::AnyPacket&&) = 0;
+	virtual Request::AnyPacket DeserializeRequest(std::vector<u8>&&) = 0;
+private:
+};
