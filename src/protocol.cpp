@@ -5,8 +5,8 @@ namespace Request {
 
 Packet::Packet() = default;
 
-Packet::Packet(u32 id, Type type, Timing timing, Sync sync, Function function)
-    : id(id), type(type), timing(timing), sync(sync), function(function) {}
+Packet::Packet(u32 id, Method method, Timing timing, Sync sync, Function function)
+    : id(id), method(method), timing(timing), sync(sync), function(function) {}
 
 } // namespace Request
 

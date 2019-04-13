@@ -24,7 +24,8 @@ int main(int argv, char** argc) {
 
     emurpc_state emurpc = emurpc_start(config);
 
-    printf("Listening on 0.0.0.0:8080\nPress any key to quit");
+    printf("Listening on 0.0.0.0:8080\nPress any key to quit\n");
+    fflush(stdout);
     while (!getchar())
         ;
     emurpc_destroy(emurpc);
