@@ -24,6 +24,8 @@ public:
     std::thread thread;
     std::unique_ptr<RPCServer> server = nullptr;
 
+    Impl(Config config) : config(config) {}
+
     ~Impl() {
         stopped = true;
         thread.join();
@@ -39,8 +41,10 @@ public:
                 server->HandleEmuCallbacks(p);
             }
             // Process any requests that have come in since then
-            server->
-            while (client_emu.pop());
+            server->ProcessClientEvents();
+            while (client_emu.pop()) {
+
+            }
 
             std::this_thread::yield();
         }

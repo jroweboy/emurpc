@@ -43,7 +43,7 @@ target_include_directories(emurpc PRIVATE externals/json)
 
 if (MSVC OR MINGW)
 	target_compile_definitions(emurpc PRIVATE -D_WIN32_WINNT=0x0501 -DWINVER=0x0501)
-	target_link_libraries(emurpc INTERFACE winmm ws2_32)
+	target_link_libraries(emurpc INTERFACE winmm ws2_32 wsock32)
 endif()
 
 if (EMURPC_BUILD_EXAMPLES)

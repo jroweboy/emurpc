@@ -3,6 +3,7 @@
 
 #include <memory>
 #include <string>
+#include <thread>
 #include <boost/variant.hpp>
 #include "common.h"
 #include "emurpc.hpp"
@@ -15,15 +16,23 @@ namespace Response {
 class Packet;
 }
 
+namespace boost {
+namespace asio {
+class io_context;
+}
+} // namespace boost
+
 class RPCServer {
 public:
-    explicit RPCServer(std::string hostname = "0.0.0.0", u16 port = 0);
+    explicit RPCServer(const std::string& hostname = "0.0.0.0", u16 port = 0);
 
-    void HandleClientEvent(const Request::Packet*);
+    ~RPCServer();
+
+    void ProcessClientEvents();
 
     void HandleEmuCallbacks(const Response::Packet*);
 
 private:
-    std::string hostname;
-    u16 port;
+    std::unique_ptr<boost::asio::io_context> ioc;
+    std::thread io_thread;
 };
