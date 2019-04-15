@@ -3,6 +3,12 @@
 #include <string.h>
 #include "emurpc.h"
 
+#ifdef _WIN32
+#include <Windows.h>
+#else
+#include <unistd.h>
+#endif
+
 static bool save_state_callback(void* user_data, u16 save_slot) {
     printf("Save state called by RPC client");
     return false;
@@ -26,8 +32,13 @@ int main(int argv, char** argc) {
 
     printf("Listening on 0.0.0.0:8080\nPress any key to quit\n");
     fflush(stdout);
-    while (!getchar())
-        ;
+    while (!getchar()) {
+#ifdef _WIN32
+        Sleep(0);
+#else
+        sleep(0);
+#endif
+    }
     emurpc_destroy(emurpc);
     return 0;
 }

@@ -1,6 +1,7 @@
 
 cmake_minimum_required(VERSION 3.1)
 set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
+include(cotire)
 
 project(emurpc)
 
@@ -15,15 +16,11 @@ add_library(emurpc
 	include/emurpc.h
 	include/emurpc.hpp
     include/common.h
-    src/binary_protocol.cpp
-	src/binary_protocol.h
     src/emurpc.cpp
     src/json_protocol.cpp
 	src/json_protocol.h
 	src/protocol.cpp
 	src/protocol.h
-    src/rpc_client.cpp
-	src/rpc_client.h
     src/rpc_server.cpp
 	src/rpc_server.h
 )
@@ -40,10 +37,10 @@ target_compile_definitions(emurpc PRIVATE
 )
 target_include_directories(emurpc PRIVATE externals/boost)
 target_include_directories(emurpc PRIVATE externals/json)
+cotire(emurpc)
 
 if (MSVC OR MINGW)
-	target_compile_definitions(emurpc PRIVATE -D_WIN32_WINNT=0x0501 -DWINVER=0x0501)
-	target_link_libraries(emurpc INTERFACE winmm ws2_32 wsock32)
+	target_link_libraries(emurpc PRIVATE winmm ws2_32 wsock32)
 endif()
 
 if (EMURPC_BUILD_EXAMPLES)

@@ -7,3 +7,5 @@ add_executable(emurpc_basic
 
 target_include_directories(emurpc_basic PRIVATE ${CMAKE_SOURCE_DIR}/include)
 target_link_libraries(emurpc_basic PRIVATE emurpc)
+target_compile_definitions(emurpc_basic PRIVATE -D_WIN32_WINNT=0x0501 -DWINVER=0x0501)
+

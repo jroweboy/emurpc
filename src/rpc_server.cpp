@@ -5,8 +5,7 @@
 #include <boost/asio/strand.hpp>
 #include <boost/beast/core.hpp>
 #include <boost/beast/websocket.hpp>
-#include "protocol.h"
-#include "rpc_client.h"
+#include "json_protocol.h"
 #include "rpc_server.h"
 
 namespace beast = boost::beast;         // from <boost/beast.hpp>
@@ -119,14 +118,14 @@ private:
 };
 
 RPCServer::RPCServer(const std::string& hostname, u16 port) {
-    auto const address = boost::asio::ip::make_address(hostname);
+    const auto address = boost::asio::ip::make_address(hostname);
     auto io = new net::io_context;
     ioc = std::unique_ptr<net::io_context>(io);
+    listener = std::make_shared<Listener>(*ioc, tcp::endpoint{address, port});
 
     // Create and launch a listening port
     io_thread = std::thread{[&] {
-        Listener l(*ioc, tcp::endpoint{address, port});
-        l.Run();
+        listener->Run();
     }};
 }
 

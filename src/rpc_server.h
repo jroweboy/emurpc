@@ -4,9 +4,6 @@
 #include <memory>
 #include <string>
 #include <thread>
-#include <boost/variant.hpp>
-#include "common.h"
-#include "emurpc.hpp"
 
 namespace Request {
 class Packet;
@@ -22,9 +19,12 @@ class io_context;
 }
 } // namespace boost
 
+class Listener;
+class Session;
+
 class RPCServer {
 public:
-    explicit RPCServer(const std::string& hostname = "0.0.0.0", u16 port = 0);
+    explicit RPCServer(const std::string& hostname = "0.0.0.0", u16 port = 8080);
 
     ~RPCServer();
 
@@ -34,5 +34,7 @@ public:
 
 private:
     std::unique_ptr<boost::asio::io_context> ioc;
+    std::shared_ptr<Listener> listener;
+    std::shared_ptr<Session> Session;
     std::thread io_thread;
 };
