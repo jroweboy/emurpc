@@ -4,6 +4,7 @@
 #include <boost/archive/iterators/base64_from_binary.hpp>
 #include <boost/archive/iterators/binary_from_base64.hpp>
 #include <boost/archive/iterators/transform_width.hpp>
+#include <boost/variant/polymorphic_get.hpp>
 #include <nlohmann/json.hpp>
 #include "json_protocol.h"
 
@@ -13,7 +14,7 @@ std::vector<u8> DecodeBase64(const std::string& val) {
     using namespace boost::archive::iterators;
     using It = transform_width<binary_from_base64<std::string::const_iterator>, 8, 6>;
     std::vector<u8> out{};
-    std::copy(It(val.c_str()), It(val.c_str() + val.size()), std::back_inserter(out));
+    std::copy(It(val.begin()), It(val.end()), std::back_inserter(out));
     return out;
 }
 
@@ -75,22 +76,95 @@ void from_json(const json& j, MemoryWrite& p) {
 }
 } // namespace Request
 
-std::vector<u8> JSONSerializer::SerializeResponse(Response::AnyPacket&& packet) {
-    // json j(packet);
-    return {};
+namespace Response {
+
+template <typename T>
+bool FromBasePacketOrError(const json& j, T& p) {
+    j.at("id").get_to(p.id);
+    try {
+        Error e{};
+        auto err = j.at("error");
+        err.at("code").get_to(e.code);
+        err.at("message").get_to(e.message);
+        return false;
+    } catch (std::runtime_error) {
+    }
+
+    return true;
 }
 
-Request::AnyPacket JSONSerializer::DeserializeRequest(std::vector<u8>&& raw) {
+template <typename T>
+json ToBasePacket(const T& p) {
+    return json{
+        {"jsonrpc", "2.0"},
+        {"id", p.id},
+    };
+}
+
+bool EncodeIfError(json& j, const Packet* p) {
+    if (p->error.code == static_cast<u32>(ErrorCode::None)) {
+        return false;
+    }
+    j["error"] = {{"code", p->error.code}, {"message", p->error.message}};
+    return true;
+}
+
+void to_json(json& j, const MemoryRead& p) {
+    j = ToBasePacket(p);
+    if (!EncodeIfError(j, &p)) {
+        j["result"] = EncodeBase64(p.result);
+    }
+}
+
+void from_json(const json& j, MemoryRead& p) {
+    std::string s;
+    if (!FromBasePacketOrError(j, p)) {
+        j.at("params").at("data").get_to(s);
+        p.result = DecodeBase64(s);
+    }
+}
+
+void to_json(json& j, const MemoryWrite& p) {
+    j = ToBasePacket(p);
+    if (!EncodeIfError(j, &p)) {
+        j["result"] = "";
+    }
+}
+
+void from_json(const json& j, MemoryWrite& p) {
+    std::string s;
+    if (!FromBasePacketOrError(j, p)) {
+        // Nothing else to serialize
+    }
+}
+
+void to_json(json& j, const AnyPacket& packet) {
+    if (const MemoryWrite* p = boost::get<MemoryWrite>(&packet)) {
+        to_json(j, *p);
+    } else if (const MemoryRead* p = boost::get<MemoryRead>(&packet)) {
+        to_json(j, *p);
+    }
+}
+
+} // namespace Response
+
+std::vector<u8> JSONSerializer::SerializeResponse(const Response::AnyPacket& packet) {
+    json j = packet;
+    std::string str = j.dump();
+    return {str.begin(), str.end()};
+}
+
+Request::AnyPacket JSONSerializer::DeserializeRequest(const std::vector<u8>& raw) {
     json j(raw);
     return {};
 }
 
-std::vector<u8> MsgPackSerializer::SerializeResponse(Response::AnyPacket&& packet) {
+std::vector<u8> MsgPackSerializer::SerializeResponse(const Response::AnyPacket& packet) {
     // json j(packet);
     return {};
 }
 
-Request::AnyPacket MsgPackSerializer::DeserializeRequest(std::vector<u8>&& raw) {
+Request::AnyPacket MsgPackSerializer::DeserializeRequest(const std::vector<u8>& raw) {
     // json j(raw);
     return {};
 }

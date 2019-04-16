@@ -4,14 +4,7 @@
 #include <memory>
 #include <string>
 #include <thread>
-
-namespace Request {
-class Packet;
-}
-
-namespace Response {
-class Packet;
-}
+#include "protocol.h"
 
 namespace boost {
 namespace asio {

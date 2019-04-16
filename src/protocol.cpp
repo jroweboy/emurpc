@@ -12,15 +12,29 @@ Packet::Packet(u32 id, Method method, Timing timing, Sync sync, Function functio
 
 namespace Response {
 
+Error NoneError{
+    static_cast<u32>(ErrorCode::None),
+    "Sentinal value",
+};
+Error MismatchError{
+    static_cast<u32>(ErrorCode::Mismatch),
+    "Client version and server version does not match",
+};
+Error InvalidHeaderError{
+    static_cast<u32>(ErrorCode::InvalidHeader),
+    "Request was malformed",
+};
+Error UnsupportedError{
+    static_cast<u32>(ErrorCode::Unsupported),
+    "Unsupported operation",
+};
+
 Packet::Packet() = default;
 
-Packet::Packet(u32 client_id, Type type, ErrorType error)
-    : client_id(client_id), type(type), error(error) {}
+Packet::Packet(u32 id, Error error) : id(id), error(error) {}
 
-MemoryRead::MemoryRead(u32 client_id, std::vector<u8>&& data, Type type, ErrorType error)
-    : Packet(client_id, type, error), data(std::move(data)) {}
+MemoryRead::MemoryRead(u32 id, std::vector<u8>&& result) : Packet(id), result(std::move(result)) {}
 
-MemoryWrite::MemoryWrite(u32 client_id, Type type, ErrorType error)
-    : Packet(client_id, type, error) {}
+MemoryWrite::MemoryWrite(u32 id) : Packet(id) {}
 
 } // namespace Response

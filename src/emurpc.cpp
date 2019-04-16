@@ -34,7 +34,7 @@ public:
     // called by server thread
     void ProcessEvents() {
         while (!stopped) {
-            // Process Emu -> Client callback messages
+            // Process Emu -> Client responses
             Response::AnyPacket res;
             while (emu_client.pop(res)) {
                 const Response::Packet* p = boost::polymorphic_get<Response::Packet>(&res);
@@ -43,7 +43,6 @@ public:
             // Process any requests that have come in since then
             server->ProcessClientEvents();
             while (client_emu.pop()) {
-
             }
 
             std::this_thread::yield();
@@ -113,7 +112,7 @@ private:
         }
     }
 
-    void SendResponse(const Response::Packet* r) {
+    void SendResponse(const Response::AnyPacket* r) {
         //
     }
 

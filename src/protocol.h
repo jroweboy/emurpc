@@ -133,16 +133,12 @@ using AnyPacket =
 
 namespace Response {
 
-enum class Type {
-    Success,  /// Empty response that just returns the ID of the packet that succeeded
-    Error,    /// General error, check ErrorType for more information about the error
-    Callback, /// Server is processing a callback request. The ID of the packet refers to the
-              /// original callback or repeat that was sent earlier
-    Command,  /// Special packets sent by the server for informational purposes (such as game
-              /// start/end)
+enum class ResponseType {
+    MemoryRead,
+    MemoryWrite,
 };
 
-enum class ErrorType {
+enum class ErrorCode {
     None,
     Mismatch,      /// Returned if the client version is a mismatch. The server should close the
                    /// connection afterwards.
@@ -150,25 +146,35 @@ enum class ErrorType {
     Unsupported,   /// If the server doesn't support this request
 };
 
+struct Error {
+    u32 code;
+    std::string message;
+};
+
+extern Error NoneError;
+extern Error MismatchError;
+extern Error InvalidHeaderError;
+extern Error UnsupportedError;
+
 class Packet {
 public:
     Packet();
-    Packet(u32 client_id, Type type, ErrorType error = ErrorType::None);
-    u32 client_id; /// ID of the packet that this is a Response for
-    Type type;
-    ErrorType error;
+    Packet(u32 id, Error error = NoneError);
+    u32 id;
+
+    Error error;
 };
 
 class MemoryRead : public Packet {
 public:
-    MemoryRead(u32 client_id, std::vector<u8>&& data, Type type = Type::Success,
-               ErrorType error = ErrorType::None);
-    std::vector<u8> data;
+    MemoryRead(u32 id, std::vector<u8>&& result);
+
+    std::vector<u8> result;
 };
 
 class MemoryWrite : public Packet {
 public:
-    MemoryWrite(u32 client_id, Type type = Type::Success, ErrorType error = ErrorType::None);
+    MemoryWrite(u32 id);
 };
 
 using AnyPacket = boost::variant<Packet, MemoryRead, MemoryWrite>;
@@ -177,7 +183,8 @@ using AnyPacket = boost::variant<Packet, MemoryRead, MemoryWrite>;
 
 class ProtocolSerializer {
 public:
-    virtual std::vector<u8> SerializeResponse(Response::AnyPacket&&) = 0;
-	virtual Request::AnyPacket DeserializeRequest(std::vector<u8>&&) = 0;
+    virtual std::vector<u8> SerializeResponse(const Response::AnyPacket&) = 0;
+    virtual Request::AnyPacket DeserializeRequest(const std::vector<u8>&) = 0;
+
 private:
 };
