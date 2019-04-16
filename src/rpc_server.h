@@ -1,23 +1,33 @@
 
-#ifndef EMURPC_RPC_SERVER
-#define EMURPC_RPC_SERVER
+#pragma once
 
-#include "emurpc/types.h"
+#include <memory>
+#include <string>
+#include <thread>
+#include "protocol.h"
 
-struct rpcserver_config {
-	const char* server_name;
-	uint16_t port;
+namespace boost {
+namespace asio {
+class io_context;
+}
+} // namespace boost
+
+class Listener;
+class Session;
+
+class RPCServer {
+public:
+    explicit RPCServer(const std::string& hostname = "0.0.0.0", u16 port = 8080);
+
+    ~RPCServer();
+
+    void ProcessClientEvents();
+
+    void HandleEmuCallbacks(const Response::Packet*);
+
+private:
+    std::unique_ptr<boost::asio::io_context> ioc;
+    std::shared_ptr<Listener> listener;
+    std::shared_ptr<Session> Session;
+    std::thread io_thread;
 };
-
-struct rpcserver;
-struct rpcserver* rpcserver_create();
-
-bool rpcserver_start(struct rpcserver*, struct rpcserver_config);
-
-void rpcserver_destroy(struct rpcserver*);
-
-void rpcserver_process_events(struct rpcserver*);
-
-void rpcserver_handle_timing(struct rpcserver*, enum emurpc_request_timing);
-
-#endif
