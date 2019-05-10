@@ -32,7 +32,44 @@ NLOHMANN_JSON_SERIALIZE_ENUM(Timing, {
                                          {Timing::MemoryAccess, "memory_access"},
                                          {Timing::GPUAccess, "gpu_access"},
                                          {Timing::SpecialAccess, "special_access"},
-                                     })
+                                     });
+
+NLOHMANN_JSON_SERIALIZE_ENUM(Method, {
+                                         {Method::Command, "command"},
+                                         {Method::MemoryRead, "memory_read"},
+                                         {Method::MemoryWrite, "memory_write"},
+                                         {Method::GPURead, "gpu_read"},
+                                         {Method::GPUWrite, "gpu_write"},
+                                         {Method::SpecialRead, "special_read"},
+                                         {Method::SpecialWrite, "special_write"},
+                                     });
+
+NLOHMANN_JSON_SERIALIZE_ENUM(Sync, {
+                                       {Sync::Blocking, "blocking"},
+                                       {Sync::NonBlocking, "nonblocking"},
+                                   });
+
+NLOHMANN_JSON_SERIALIZE_ENUM(Function, {
+    {Function::Once, "once"},
+    {Function::Conditional, "conditional"},
+    {Function::Callback, "callback"},
+});
+
+
+NLOHMANN_JSON_SERIALIZE_ENUM(CommandType, {
+    {CommandType::Continue, "continue"},
+    {CommandType::CancelCallback, "cancel"},
+    {CommandType::ClearCPUCache, "clear_cpu_cache"},
+    {CommandType::SaveState, "save_state"},
+    {CommandType::LoadState, "load_state"},
+    {CommandType::PauseEmu, "pause_emu"},
+    {CommandType::ResumeEmu, "resume_emu"},
+    {CommandType::LoadRom, "load_rom"},
+    {CommandType::CloseRom, "close_rom"},
+    {CommandType::ResetRom, "reset_rom"},
+    {CommandType::CreateOverlay, "create_overlay"},
+    {CommandType::DrawOverlay, "draw_overlay"},
+});
 
 template <typename T>
 json FromBasePacket(const json& j, T& p) {

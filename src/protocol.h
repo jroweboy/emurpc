@@ -62,24 +62,55 @@ enum class CommandType {
 
 class Packet {
 public:
-    Packet();
-    Packet(u32 id, Method type, Timing timing, Sync sync, Function function);
-    u32 id; /// Each request has an ID and the server will respond with the ID passed it.
-            /// Sequential IDs are good enough.
+    u32 id;
     Method method;
     Timing timing;
     Sync sync;
     Function function;
+
+    Packet();
+    Packet(u32 id, Method type, Timing timing, Sync sync, Function function);
+	
+    bool operator==(const Packet& o) const {
+        return std::tie(id, method, timing, sync, function) == std::tie(o.id, o.method, o.timing, o.sync, o.function);
+    }
+
+	friend std::ostream& operator<<(std::ostream &out, const Packet& b) {
+		return b.print(out);
+	}
+ 
+	// We'll rely on member function print() to do the actual printing
+	// Because print is a normal member function, it can be virtualized
+	virtual std::ostream& print(std::ostream& out) const {
+		out << "Base";
+		return out;
+	}
 };
 
 class MemoryWrite : public Packet {
 public:
+    MemoryWrite(u32 id, Timing timing, Sync sync, Function function, u64 address,
+                std::vector<u8>&& data)
+        : Packet(id, Method::MemoryRead, timing, sync, function), address(address),
+          data(std::move(data)) {}
+
+    bool operator==(const MemoryWrite& o) const {
+        return (Packet::operator==(o)) & std::tie(address, data) == std::tie(o.address, o.data);
+    }
+
     u64 address;
     std::vector<u8> data;
 };
 
 class MemoryRead : public Packet {
 public:
+    MemoryRead(u32 id, Timing timing, Sync sync, Function function, u64 address, u64 length)
+        : Packet(id, Method::MemoryRead, timing, sync, function), address(address), length(length) {}
+	
+    bool operator==(const MemoryRead& o) const {
+        return (Packet::operator==(o)) & std::tie(address, length) == std::tie(o.address, o.length);
+    }
+
     u64 address;
     u64 length;
 };

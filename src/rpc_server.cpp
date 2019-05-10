@@ -23,7 +23,6 @@ public:
 
     // Start the asynchronous operation
     void Run() {
-
         // Accept the websocket handshake
         ws.async_accept(boost::asio::bind_executor(
             strand, std::bind(&Session::OnAccept, shared_from_this(), std::placeholders::_1)));
