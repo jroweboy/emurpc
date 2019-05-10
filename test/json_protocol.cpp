@@ -19,7 +19,7 @@ TEST_CASE("JSON serialization", "[json_serializer]") {
   "result": "SEVMTE8gV09STEQh"
 })a"_json;
         p = Response::MemoryRead{1, std::move(data)};
-		serial = j.SerializeResponse(p);
+        serial = j.SerializeResponse(p);
         REQUIRE(json::parse(serial.begin(), serial.end()) == out);
     }
 }
