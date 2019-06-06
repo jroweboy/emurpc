@@ -50,26 +50,25 @@ NLOHMANN_JSON_SERIALIZE_ENUM(Sync, {
                                    });
 
 NLOHMANN_JSON_SERIALIZE_ENUM(Function, {
-    {Function::Once, "once"},
-    {Function::Conditional, "conditional"},
-    {Function::Callback, "callback"},
-});
-
+                                           {Function::Once, "once"},
+                                           {Function::Conditional, "conditional"},
+                                           {Function::Callback, "callback"},
+                                       });
 
 NLOHMANN_JSON_SERIALIZE_ENUM(CommandType, {
-    {CommandType::Continue, "continue"},
-    {CommandType::CancelCallback, "cancel"},
-    {CommandType::ClearCPUCache, "clear_cpu_cache"},
-    {CommandType::SaveState, "save_state"},
-    {CommandType::LoadState, "load_state"},
-    {CommandType::PauseEmu, "pause_emu"},
-    {CommandType::ResumeEmu, "resume_emu"},
-    {CommandType::LoadRom, "load_rom"},
-    {CommandType::CloseRom, "close_rom"},
-    {CommandType::ResetRom, "reset_rom"},
-    {CommandType::CreateOverlay, "create_overlay"},
-    {CommandType::DrawOverlay, "draw_overlay"},
-});
+                                              {CommandType::Continue, "continue"},
+                                              {CommandType::CancelCallback, "cancel"},
+                                              {CommandType::ClearCPUCache, "clear_cpu_cache"},
+                                              {CommandType::SaveState, "save_state"},
+                                              {CommandType::LoadState, "load_state"},
+                                              {CommandType::PauseEmu, "pause_emu"},
+                                              {CommandType::ResumeEmu, "resume_emu"},
+                                              {CommandType::LoadRom, "load_rom"},
+                                              {CommandType::CloseRom, "close_rom"},
+                                              {CommandType::ResetRom, "reset_rom"},
+                                              {CommandType::CreateOverlay, "create_overlay"},
+                                              {CommandType::DrawOverlay, "draw_overlay"},
+                                          });
 
 template <typename T>
 json FromBasePacket(const json& j, T& p) {
@@ -111,6 +110,30 @@ void from_json(const json& j, MemoryWrite& p) {
     p.data = DecodeBase64(s);
     params.at("address").get_to(p.address);
 }
+
+void to_json(json& j, const MemoryRead& p) {
+    j = ToBasePacket(p);
+    auto params = j["params"];
+    params["length"] = p.length;
+    params["address"] = p.address;
+}
+
+void from_json(const json& j, MemoryRead& p) {
+    auto params = FromBasePacket(j, p);
+    params.at("address").get_to(p.address);
+    params.at("length").get_to(p.length);
+}
+
+void to_json(json& j, const AnyPacket& p) {
+    switch (static_cast<PacketList>(p.which())) {
+    case PacketList::MemoryWrite:
+        MemoryWrite a = boost::get<MemoryWrite>(p);
+        to_json(j, a);
+        break;
+    }
+    // j = ToBasePacket(p);
+}
+
 } // namespace Request
 
 namespace Response {
@@ -183,6 +206,13 @@ void to_json(json& j, const AnyPacket& packet) {
     }
 }
 
+void from_json(const json& j, AnyPacket& p) {
+    std::string s;
+    // if (!FromBasePacketOrError(j, p)) {
+    // Nothing else to serialize
+    //}
+}
+
 } // namespace Response
 
 std::vector<u8> JSONSerializer::SerializeResponse(const Response::AnyPacket& packet) {
@@ -192,7 +222,18 @@ std::vector<u8> JSONSerializer::SerializeResponse(const Response::AnyPacket& pac
 }
 
 Request::AnyPacket JSONSerializer::DeserializeRequest(const std::vector<u8>& raw) {
-    json j(raw);
+    json j = json::parse(raw);
+    Request::Method m;
+    j.at("method").get_to(m);
+    if (m == Request::Method::MemoryWrite) {
+        Request::MemoryWrite a;
+        from_json(j, a);
+        return a;
+    } else if (m == Request::Method::MemoryRead) {
+        Request::MemoryRead a;
+        from_json(j, a);
+        return a;
+    }
     return {};
 }
 

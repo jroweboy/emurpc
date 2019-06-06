@@ -70,25 +70,27 @@ public:
 
     Packet();
     Packet(u32 id, Method type, Timing timing, Sync sync, Function function);
-	
+
     bool operator==(const Packet& o) const {
-        return std::tie(id, method, timing, sync, function) == std::tie(o.id, o.method, o.timing, o.sync, o.function);
+        return std::tie(id, method, timing, sync, function) ==
+               std::tie(o.id, o.method, o.timing, o.sync, o.function);
     }
 
-	friend std::ostream& operator<<(std::ostream &out, const Packet& b) {
-		return b.print(out);
-	}
- 
-	// We'll rely on member function print() to do the actual printing
-	// Because print is a normal member function, it can be virtualized
-	virtual std::ostream& print(std::ostream& out) const {
-		out << "Base";
-		return out;
-	}
+    friend std::ostream& operator<<(std::ostream& out, const Packet& b) {
+        return b.print(out);
+    }
+
+    // We'll rely on member function print() to do the actual printing
+    // Because print is a normal member function, it can be virtualized
+    virtual std::ostream& print(std::ostream& out) const {
+        out << "Base";
+        return out;
+    }
 };
 
 class MemoryWrite : public Packet {
 public:
+    MemoryWrite() : Packet(), address(0), data() {}
     MemoryWrite(u32 id, Timing timing, Sync sync, Function function, u64 address,
                 std::vector<u8>&& data)
         : Packet(id, Method::MemoryRead, timing, sync, function), address(address),
@@ -104,9 +106,11 @@ public:
 
 class MemoryRead : public Packet {
 public:
+    MemoryRead() : Packet(), address(0), length(0) {}
     MemoryRead(u32 id, Timing timing, Sync sync, Function function, u64 address, u64 length)
-        : Packet(id, Method::MemoryRead, timing, sync, function), address(address), length(length) {}
-	
+        : Packet(id, Method::MemoryRead, timing, sync, function), address(address), length(length) {
+    }
+
     bool operator==(const MemoryRead& o) const {
         return (Packet::operator==(o)) & std::tie(address, length) == std::tie(o.address, o.length);
     }
@@ -159,6 +163,14 @@ public:
 
 using AnyPacket =
     boost::variant<Packet, MemoryRead, MemoryWrite, SaveStateCommand, LoadStateCommand>;
+
+enum class PacketList {
+    Packet,
+    MemoryRead,
+    MemoryWrite,
+    SaveStateCommand,
+    LoadStateCommand,
+};
 
 } // namespace Request
 

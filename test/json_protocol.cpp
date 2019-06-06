@@ -26,7 +26,8 @@ TEST_CASE("Response JSON De/Serialization", "[json_serializer]") {
     SECTION("Response::MemoryWrite") {
         j = R"a({
   "jsonrpc": "2.0",
-  "id": 1
+  "id": 1,
+  "result": ""
 })a"_json;
         p = Response::MemoryWrite(1);
         serial = ser.SerializeResponse(p);
@@ -51,10 +52,10 @@ TEST_CASE("Request JSON De/Serialization", "[json_serializer]") {
     "sync": "nonblocking",
     "function": "once",
     "address": 1000,
-    "length": 64,
+    "length": 64
   }
 })a"_json;
-		p = MemoryRead(1, Timing::Immediate, Sync::Blocking, Function::Once, 1000, 64);
+		p = MemoryRead(1, Timing::Immediate, Sync::NonBlocking, Function::Once, 1000, 64);
 		std::string j_str = j.dump();
 		std::vector<u8> bytes{j_str.begin(), j_str.end()};
 		deser = ser.DeserializeRequest(bytes);
