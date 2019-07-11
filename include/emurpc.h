@@ -69,6 +69,7 @@ enum emurpc_access_type {
 struct emurpc_memory_access {
     enum emurpc_access_type type;
     u64 address;
+    u64 size;
 };
 
 struct emurpc_gpu_access {

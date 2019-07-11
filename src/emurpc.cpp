@@ -15,12 +15,12 @@
 class EmuRPC::Impl {
 public:
     Config config;
-    std::atomic_bool stopped;
+    std::atomic_bool stopped = false;
     std::atomic_bool blocking_emu;
 
-    std::unordered_map<Request::Timing, std::vector<Request::AnyPacket>> callbacks;
-    boost::lockfree::spsc_queue<Request::AnyPacket, boost::lockfree::capacity<1024>> client_emu;
-    boost::lockfree::spsc_queue<Response::AnyPacket, boost::lockfree::capacity<1024>> emu_client;
+    std::unordered_map<Request::Timing, std::vector<ClientRequest>> callbacks;
+    ClientEmuQueue client_emu;
+    EmuClientQueue emu_client;
     std::thread thread;
     std::unique_ptr<RPCServer> server = nullptr;
 
@@ -35,14 +35,18 @@ public:
     void ProcessEvents() {
         while (!stopped) {
             // Process Emu -> Client responses
-            Response::AnyPacket res;
+            ClientResponse res;
             while (emu_client.pop(res)) {
-                const Response::Packet* p = boost::polymorphic_get<Response::Packet>(&res);
-                server->HandleEmuCallbacks(p);
+                auto [id, packet] = res;
+                server->SendResponse(id, packet);
             }
             // Process any requests that have come in since then
-            server->ProcessClientEvents();
-            while (client_emu.pop()) {
+            // server->ProcessClientEvents();
+            ClientRequest req;
+            while (client_emu.pop(req)) {
+                auto [id, packet] = req;
+                const Request::Packet* p = boost::polymorphic_get<Request::Packet>(&packet);
+                HandleRequest(id, p);
             }
 
             std::this_thread::yield();
@@ -52,14 +56,16 @@ public:
     // Called by emu thread
     void HandleTiming(Request::Timing t) {
         // Check this timings callbacks to see what we need to do
-        for (const auto& cb : callbacks[t]) {
+        for (const auto& req : callbacks[t]) {
+            auto [id, cb] = req;
             const Request::Packet* p = boost::polymorphic_get<Request::Packet>(&cb);
             if (p->sync == Request::Sync::Blocking) {
                 blocking_emu = true;
             }
-            HandleRequest(p);
+            HandleRequest(id, p);
         }
-        const auto process = [&](const Request::AnyPacket& message) {
+        const auto process = [&](const ClientRequest& req) {
+            auto [id, message] = req;
             const Request::Packet* p = boost::polymorphic_get<Request::Packet>(&message);
             if (p->method == Request::Method::Command) {
                 auto* m = static_cast<const Request::Command*>(p);
@@ -71,7 +77,7 @@ public:
         };
         client_emu.consume_all(process);
         if (blocking_emu) {
-            Request::AnyPacket message;
+            ClientRequest message;
             bool is_blocked = true;
             while (client_emu.pop(&message)) {
                 is_blocked = process(message);
@@ -80,7 +86,7 @@ public:
     }
 
 private:
-    void HandleRequest(const Request::Packet* r) {
+    void HandleRequest(u32 id, const Request::Packet* r) {
         using namespace Request;
         switch (r->method) {
         case Method::Command:
@@ -88,17 +94,16 @@ private:
             break;
         case Method::MemoryRead: {
             auto* p = static_cast<const MemoryRead*>(r);
-            std::vector<u8> data{};
-            data.reserve(p->length);
+            std::vector<u8> data(p->length);
             config.memory_read_callback(config.user_data, p->address, p->length, data.data());
-            emu_client.push(Response::MemoryRead(p->id, std::move(data)));
+            emu_client.push(ClientResponse{id, Response::MemoryRead{p->id, std::move(data)}});
             break;
         }
         case Method::MemoryWrite: {
             auto* p = static_cast<const MemoryWrite*>(r);
             config.memory_write_callback(config.user_data, p->address, p->data.size(),
                                          p->data.data());
-            emu_client.push(Response::MemoryWrite(p->id));
+            emu_client.push(ClientResponse{id, Response::MemoryWrite(p->id)});
             break;
         }
         case Method::GPURead:
@@ -123,7 +128,7 @@ private:
 
 EmuRPC::EmuRPC(Config config) {
     impl = new Impl(config);
-    RPCServer* server = new RPCServer();
+    RPCServer* server = new RPCServer(impl->client_emu, impl->emu_client);
     impl->server = std::unique_ptr<RPCServer>(server);
     impl->thread = std::thread([this] { impl->ProcessEvents(); });
 }
@@ -136,7 +141,9 @@ void EmuRPC::OnFrameEnd() {
     impl->HandleTiming(Request::Timing::FrameEnd);
 }
 
-void EmuRPC::OnMemoryAccess(EmuRPC::AccessType, u64 address) {}
+void EmuRPC::OnMemoryAccess(EmuRPC::AccessType, u64 address, u64 size) {
+    impl->HandleTiming(Request::Timing::MemoryAccess);
+}
 
 void EmuRPC::OnGPUAccess(EmuRPC::AccessType, const char* field) {}
 
@@ -181,7 +188,7 @@ void emurpc_on_frame_end(emurpc_state state) {
 
 void emurpc_on_memory_access(emurpc_state state, struct emurpc_memory_access config) {
     EmuRPC* rpc = (EmuRPC*)state;
-    rpc->OnMemoryAccess(static_cast<EmuRPC::AccessType>(config.type), config.address);
+    rpc->OnMemoryAccess(static_cast<EmuRPC::AccessType>(config.type), config.address, config.size);
 }
 
 void emurpc_on_gpu_access(emurpc_state state, struct emurpc_gpu_access config) {

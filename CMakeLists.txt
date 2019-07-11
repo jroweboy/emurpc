@@ -10,7 +10,7 @@ option(EMURPC_BUILD_EXAMPLES "Build examples for emurpc" Off)
 option(EMURPC_BUILD_STATIC "Build static lib" On)
 # TODO support dynamic linking
 
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 17)
 
 add_library(emurpc
 	include/emurpc.h

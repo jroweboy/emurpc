@@ -196,7 +196,6 @@ void to_json(json& j, const AnyPacket& packet) {
         to_json(j, *p);
     }
 }
-
 } // namespace Response
 
 std::vector<u8> JSONSerializer::SerializeResponse(const Response::AnyPacket& packet) {

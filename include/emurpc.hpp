@@ -11,7 +11,8 @@ public:
     using GPUReadCallback = void (*)(void* user_data, const char* field, u8* out);
     using GPUWriteCallback = void (*)(void* user_data, const char* field, u64 size, const u8* data);
     using SpecialReadCallback = void (*)(void* user_data, const char* field, u8* out);
-    using SpecialWriteCallback = void (*)(void* user_data, const char* field, u64 size, const u8* data);
+    using SpecialWriteCallback = void (*)(void* user_data, const char* field, u64 size,
+                                          const u8* data);
 
     // Callbacks for Client -> Emulator communication
     using LoadStateCallback = bool (*)(void* user_data, u16 save_slot);
@@ -54,14 +55,13 @@ public:
 
     void OnFrameEnd();
 
-    void OnMemoryAccess(AccessType, u64 address);
+    void OnMemoryAccess(AccessType, u64 address, u64 size);
 
     void OnGPUAccess(AccessType, const char* field);
 
     void OnSpecialAccess(AccessType, const char* field);
 
     // Helper methods for accessors
-
     bool CheckRange(u64 addr, u64 size) const;
 
 private:
