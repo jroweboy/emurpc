@@ -93,7 +93,7 @@ public:
     MemoryWrite() : Packet(), address(0), data() {}
     MemoryWrite(u32 id, Timing timing, Sync sync, Function function, u64 address,
                 std::vector<u8>&& data)
-        : Packet(id, Method::MemoryRead, timing, sync, function), address(address),
+        : Packet(id, Method::MemoryWrite, timing, sync, function), address(address),
           data(std::move(data)) {}
 
     bool operator==(const MemoryWrite& o) const {

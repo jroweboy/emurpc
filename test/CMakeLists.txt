@@ -2,6 +2,7 @@
 set(TEST_SOURCES
     catch_emurpc.cpp
     json_protocol.cpp
+    end_to_end.cpp
 )
 
 add_executable(catch_emurpc ${TEST_SOURCES})

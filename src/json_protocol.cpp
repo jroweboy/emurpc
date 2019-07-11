@@ -124,6 +124,7 @@ void from_json(const json& j, MemoryRead& p) {
     params.at("length").get_to(p.length);
 }
 
+// TODO: will this be required?
 void to_json(json& j, const AnyPacket& p) {
     switch (static_cast<PacketList>(p.which())) {
     case PacketList::MemoryWrite:
@@ -139,18 +140,12 @@ void to_json(json& j, const AnyPacket& p) {
 namespace Response {
 
 template <typename T>
-bool FromBasePacketOrError(const json& j, T& p) {
+void FromBasePacket(const json& j, T& p) {
     j.at("id").get_to(p.id);
-    try {
-        Error e{};
-        auto err = j.at("error");
-        err.at("code").get_to(e.code);
-        err.at("message").get_to(e.message);
-        return false;
-    } catch (std::runtime_error) {
-    }
-
-    return true;
+    Error e{};
+    auto err = j.at("error");
+    err.at("code").get_to(e.code);
+    err.at("message").get_to(e.message);
 }
 
 template <typename T>
@@ -178,10 +173,9 @@ void to_json(json& j, const MemoryRead& p) {
 
 void from_json(const json& j, MemoryRead& p) {
     std::string s;
-    if (!FromBasePacketOrError(j, p)) {
-        j.at("params").at("data").get_to(s);
-        p.result = DecodeBase64(s);
-    }
+    FromBasePacket(j, p);
+    j.at("params").at("data").get_to(s);
+    p.result = DecodeBase64(s);
 }
 
 void to_json(json& j, const MemoryWrite& p) {
@@ -192,10 +186,7 @@ void to_json(json& j, const MemoryWrite& p) {
 }
 
 void from_json(const json& j, MemoryWrite& p) {
-    std::string s;
-    if (!FromBasePacketOrError(j, p)) {
-        // Nothing else to serialize
-    }
+    FromBasePacket(j, p);
 }
 
 void to_json(json& j, const AnyPacket& packet) {
@@ -204,13 +195,6 @@ void to_json(json& j, const AnyPacket& packet) {
     } else if (const MemoryRead* p = boost::get<MemoryRead>(&packet)) {
         to_json(j, *p);
     }
-}
-
-void from_json(const json& j, AnyPacket& p) {
-    std::string s;
-    // if (!FromBasePacketOrError(j, p)) {
-    // Nothing else to serialize
-    //}
 }
 
 } // namespace Response
@@ -223,6 +207,11 @@ std::vector<u8> JSONSerializer::SerializeResponse(const Response::AnyPacket& pac
 
 Request::AnyPacket JSONSerializer::DeserializeRequest(const std::vector<u8>& raw) {
     json j = json::parse(raw);
+
+    // Check for the appropriate json rpc version
+    if (j.at("jsonrpc") != "2.0") {
+        throw version_mismatch_error("Version mismatch.");
+    }
     Request::Method m;
     j.at("method").get_to(m);
     if (m == Request::Method::MemoryWrite) {
@@ -234,7 +223,7 @@ Request::AnyPacket JSONSerializer::DeserializeRequest(const std::vector<u8>& raw
         from_json(j, a);
         return a;
     }
-    return {};
+    throw invalid_method_error("Invalid method");
 }
 
 std::vector<u8> MsgPackSerializer::SerializeResponse(const Response::AnyPacket& packet) {
