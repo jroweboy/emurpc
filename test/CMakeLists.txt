@@ -1,8 +1,9 @@
 
 set(TEST_SOURCES
     catch_emurpc.cpp
-    json_protocol.cpp
     emurpc.cpp
+    emulator.h
+    json_protocol.cpp
 )
 
 add_executable(catch_emurpc ${TEST_SOURCES})
